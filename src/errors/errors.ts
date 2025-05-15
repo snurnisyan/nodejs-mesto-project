@@ -1,3 +1,5 @@
+import StatusCodes from '../utils/status-codes';
+
 class CustomError extends Error {
   public statusCode: number;
 
@@ -7,19 +9,15 @@ class CustomError extends Error {
   }
 
   static BadRequest(message: string) {
-    return new CustomError(400, message);
+    return new CustomError(StatusCodes.BAD_REQUEST, message);
   }
 
   static Unauthorized(message: string) {
-    return new CustomError(401, message);
+    return new CustomError(StatusCodes.UNAUTHORIZED, message);
   }
 
   static NotFound(message: string) {
-    return new CustomError(404, message);
-  }
-
-  static InternalServer() {
-    return new CustomError(500, 'Произошла ошибка на сервере');
+    return new CustomError(StatusCodes.NOT_FOUND, message);
   }
 }
 
