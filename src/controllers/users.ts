@@ -1,47 +1,62 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import User from '../models/user';
 import { AuthorizedRequest } from '../middlewares/auth';
+import CustomError from '../errors/errors';
 
-export const getUsers = (req: Request, res: Response) => {
+export const getUsers = (req: Request, res: Response, next: NextFunction) => {
   return User.find({})
     .then((users) => res.send({ data: users }))
-    .catch(() => res.status(500).send({ message: 'Произошла ошибка' }));
+    .catch(next);
 };
 
-export const getUserById = (req: Request, res: Response) => {
+export const getUserById = (req: Request, res: Response, next: NextFunction) => {
   return User.findById(req.params.id)
-    .then((user) => res.send({ data: user }))
-    .catch(() => res.status(500).send({ message: 'Произошла ошибка' }));
+    .then((user) => {
+      if (!user) {
+        throw CustomError.NotFound('Нет пользователя с таким id');
+      }
+      res.send({ data: user });
+    })
+    .catch(next);
 };
 
-export const createUser = (req: Request, res: Response) => {
+export const createUser = (req: Request, res: Response, next: NextFunction) => {
   const { name, about, avatar } = req.body;
 
   return User.create({ name, about, avatar })
     .then((user) => res.send({ data: user }))
-    .catch(() => res.status(500).send({ message: 'Произошла ошибка' }));
+    .catch(next);
 };
 
-export const updateUser = (req: AuthorizedRequest, res: Response) => {
+export const updateUser = (req: AuthorizedRequest, res: Response, next: NextFunction) => {
   const { name, about } = req.body;
   const userId = req.user?._id;
   if (!userId) {
-    throw Error('Юзер не авторизован');
+    throw CustomError.Unauthorized('Пользователь не авторизован');
   }
-
-  return User.findByIdAndUpdate(userId, { name, about })
-    .then((user) => res.send({ data: user }))
-    .catch(() => res.status(500).send({ message: 'Произошла ошибка' }));
+  return User.findByIdAndUpdate(userId, { name, about }, { new: true })
+    .then((user) => {
+      if (!user) {
+        throw CustomError.NotFound('Нет пользователя с таким id');
+      }
+      res.send({ data: user });
+    })
+    .catch(next);
 };
 
-export const updateAvatar = (req: AuthorizedRequest, res: Response) => {
+export const updateAvatar = (req: AuthorizedRequest, res: Response, next: NextFunction) => {
   const { avatar } = req.body;
   const userId = req.user?._id;
   if (!userId) {
-    throw Error('Юзер не авторизован');
+    throw CustomError.Unauthorized('Пользователь не авторизован');
   }
 
-  return User.findByIdAndUpdate(userId, { avatar })
-    .then((user) => res.send({ data: user }))
-    .catch(() => res.status(500).send({ message: 'Произошла ошибка' }));
+  return User.findByIdAndUpdate(userId, { avatar }, { new: true })
+    .then((user) => {
+      if (!user) {
+        throw CustomError.NotFound('Нет пользователя с таким id');
+      }
+      res.send({ data: user });
+    })
+    .catch(next);
 };

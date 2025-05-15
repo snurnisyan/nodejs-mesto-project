@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import userRouter from './routes/users';
 import cardRouter from './routes/cards';
 import authMiddleware from './middlewares/auth';
+import errorHandler from './middlewares/error-handler';
 
 const { PORT = 3000 } = process.env;
 
@@ -14,6 +15,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(authMiddleware);
 app.use('/users', userRouter);
 app.use('/cards', cardRouter);
+app.use(errorHandler);
 
 app.listen(PORT, () => {
   app.get('/', (req: Request, res: Response) => {
