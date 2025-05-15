@@ -4,8 +4,8 @@ export interface ICard {
   name: string;
   link: string;
   createdAt: Date;
-  owner: mongoose.Schema.Types.ObjectId;
-  likes: Array<mongoose.Schema.Types.ObjectId>;
+  owner: mongoose.Types.ObjectId;
+  likes: mongoose.Types.ObjectId[];
 }
 
 const cardSchema = new mongoose.Schema({
@@ -29,7 +29,7 @@ const cardSchema = new mongoose.Schema({
     required: true,
   },
   likes: {
-    type: Array<mongoose.Schema.Types.ObjectId>,
+    type: [mongoose.Schema.Types.ObjectId],
     default: [],
   },
 });

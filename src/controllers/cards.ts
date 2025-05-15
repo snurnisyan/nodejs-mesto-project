@@ -59,7 +59,6 @@ export const dislikeCard = (req: AuthorizedRequest, res: Response, next: NextFun
   }
   return Card.findByIdAndUpdate(
     req.params.id,
-    // @ts-ignore
     { $pull: { likes: userId } },
     { new: true },
   )
