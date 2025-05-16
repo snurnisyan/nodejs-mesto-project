@@ -16,8 +16,16 @@ class CustomError extends Error {
     return new CustomError(StatusCodes.UNAUTHORIZED, message);
   }
 
+  static Forbidden(message: string) {
+    return new CustomError(StatusCodes.FORBIDDEN, message);
+  }
+
   static NotFound(message: string) {
     return new CustomError(StatusCodes.NOT_FOUND, message);
+  }
+
+  static Conflict(message: string) {
+    return new CustomError(StatusCodes.CONFLICT, message);
   }
 }
 

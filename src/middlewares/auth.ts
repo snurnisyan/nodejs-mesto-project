@@ -1,5 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import mongoose from 'mongoose';
+import jwt, { JwtPayload } from 'jsonwebtoken';
+import CustomError from '../errors/errors';
 
 export interface AuthorizedRequest extends Request {
   user?: {
@@ -7,10 +9,22 @@ export interface AuthorizedRequest extends Request {
   }
 }
 
+interface UserPayload extends JwtPayload {
+  _id: mongoose.Types.ObjectId;
+}
+
 const authMiddleware = (req: AuthorizedRequest, res: Response, next: NextFunction) => {
-  req.user = {
-    _id: new mongoose.Types.ObjectId('6820bf25db3e5d8b73cb195f'),
-  };
+  const { token } = req.cookies;
+  if (!token) {
+    throw CustomError.Unauthorized('Необходима авторизация');
+  }
+  let payload;
+  try {
+    payload = jwt.verify(token, 'some-secret-key') as UserPayload;
+  } catch (err) {
+    throw CustomError.Unauthorized('Необходима авторизация');
+  }
+  req.user = payload;
   next();
 };
 

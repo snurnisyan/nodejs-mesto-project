@@ -1,8 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
-import User from '../models/user';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
+import User, { IUser } from '../models/user';
 import { AuthorizedRequest } from '../middlewares/auth';
 import CustomError from '../errors/errors';
 import createBadRequestHandler from '../utils/bad-request-handler';
+import checkUser from '../utils/user-check-handler';
 
 export const getUsers = (req: Request, res: Response, next: NextFunction) => User.find({})
   .then((users) => res.send({ data: users }))
@@ -22,19 +25,39 @@ export const getUserById = (
   .catch(createBadRequestHandler('Передан некорректный id пользователя', next));
 
 export const createUser = (req: Request, res: Response, next: NextFunction) => {
-  const { name, about, avatar } = req.body;
+  const {
+    name,
+    about,
+    avatar,
+    email,
+    password,
+  } = req.body;
 
-  return User.create({ name, about, avatar })
-    .then((user) => res.send({ data: user }))
-    .catch(createBadRequestHandler('Переданы некорректные данные при создании пользователя', next));
+  return bcrypt.hash(password, 10)
+    .then((hash) => User.create({
+      name,
+      about,
+      avatar,
+      email,
+      password: hash,
+    }))
+    .then((user) => {
+      const newUser: Partial<IUser> = user.toObject();
+      delete newUser.password;
+      res.send({ data: newUser });
+    })
+    .catch((err) => {
+      if (err.message.includes('E11000 duplicate key error')) {
+        next(CustomError.Conflict('Пользователь с таким email уже существует'));
+      } else {
+        createBadRequestHandler('Переданы некорректные данные при создании пользователя', next);
+      }
+    });
 };
 
 export const updateUser = (req: AuthorizedRequest, res: Response, next: NextFunction) => {
   const { name, about } = req.body;
-  const userId = req.user?._id;
-  if (!userId) {
-    throw CustomError.Unauthorized('Пользователь не авторизован');
-  }
+  const userId = checkUser(req);
   return User.findByIdAndUpdate(userId, { name, about }, { new: true })
     .then((user) => {
       if (!user) {
@@ -47,11 +70,7 @@ export const updateUser = (req: AuthorizedRequest, res: Response, next: NextFunc
 
 export const updateAvatar = (req: AuthorizedRequest, res: Response, next: NextFunction) => {
   const { avatar } = req.body;
-  const userId = req.user?._id;
-  if (!userId) {
-    throw CustomError.Unauthorized('Пользователь не авторизован');
-  }
-
+  const userId = checkUser(req);
   return User.findByIdAndUpdate(userId, { avatar }, { new: true })
     .then((user) => {
       if (!user) {
@@ -60,4 +79,27 @@ export const updateAvatar = (req: AuthorizedRequest, res: Response, next: NextFu
       res.send({ data: user });
     })
     .catch(createBadRequestHandler('Переданы некорректные данные при обновлении аватара', next));
+};
+
+export const login = (req: Request, res: Response, next: NextFunction) => {
+  const { email, password } = req.body;
+  return User.findUserByCredentials(email, password)
+    .then((user) => {
+      const token = jwt.sign({ _id: user._id }, 'some-secret-key', { expiresIn: '7d' });
+      res.cookie('token', token, { httpOnly: true });
+      res.send({ message: 'OK' });
+    })
+    .catch(createBadRequestHandler('Переданы некорректные данные для авторизации', next));
+};
+
+export const getCurrentUser = (req: AuthorizedRequest, res: Response, next: NextFunction) => {
+  const userId = checkUser(req);
+  return User.findById(userId)
+    .then((user) => {
+      if (!user) {
+        throw CustomError.NotFound('Пользователь с указанным id не найден');
+      }
+      res.send({ data: user });
+    })
+    .catch(createBadRequestHandler('Передан некорректный id пользователя', next));
 };
