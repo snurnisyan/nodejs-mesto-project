@@ -7,6 +7,8 @@ import CustomError from '../errors/errors';
 import createBadRequestHandler from '../utils/bad-request-handler';
 import checkUser from '../utils/user-check-handler';
 
+const { JWT_SECRET = 'dev-key' } = process.env;
+
 export const getUsers = (req: Request, res: Response, next: NextFunction) => User.find({})
   .then((users) => res.send({ data: users }))
   .catch(next);
@@ -85,7 +87,7 @@ export const login = (req: Request, res: Response, next: NextFunction) => {
   const { email, password } = req.body;
   return User.findUserByCredentials(email, password)
     .then((user) => {
-      const token = jwt.sign({ _id: user._id }, 'some-secret-key', { expiresIn: '7d' });
+      const token = jwt.sign({ _id: user._id }, JWT_SECRET, { expiresIn: '7d' });
       res.cookie('token', token, { httpOnly: true });
       res.send({ message: 'OK' });
     })

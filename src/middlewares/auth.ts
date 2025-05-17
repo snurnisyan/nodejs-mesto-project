@@ -13,6 +13,8 @@ interface UserPayload extends JwtPayload {
   _id: mongoose.Types.ObjectId;
 }
 
+const { JWT_SECRET = 'dev-key' } = process.env;
+
 const authMiddleware = (req: AuthorizedRequest, res: Response, next: NextFunction) => {
   const { token } = req.cookies;
   if (!token) {
@@ -20,7 +22,7 @@ const authMiddleware = (req: AuthorizedRequest, res: Response, next: NextFunctio
   }
   let payload;
   try {
-    payload = jwt.verify(token, 'some-secret-key') as UserPayload;
+    payload = jwt.verify(token, JWT_SECRET) as UserPayload;
   } catch (err) {
     throw CustomError.Unauthorized('Необходима авторизация');
   }

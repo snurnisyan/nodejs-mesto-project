@@ -1,16 +1,18 @@
 import express, { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import cookieParser from 'cookie-parser';
+import dotenv from 'dotenv';
 import userRouter from './routes/users';
 import cardRouter from './routes/cards';
 import authMiddleware from './middlewares/auth';
 import errorHandler from './middlewares/error-handler';
 import { createUser, login } from './controllers/users';
 
-const { PORT = 3000 } = process.env;
+dotenv.config();
+const { PORT = 3000, DB_URL = 'mongodb://localhost:27017/mestodb' } = process.env;
 
 const app = express();
-mongoose.connect('mongodb://localhost:27017/mestodb');
+mongoose.connect(DB_URL);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
