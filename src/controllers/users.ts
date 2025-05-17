@@ -52,7 +52,7 @@ export const createUser = (req: Request, res: Response, next: NextFunction) => {
       if (err.message.includes('E11000 duplicate key error')) {
         next(CustomError.Conflict('Пользователь с таким email уже существует'));
       } else {
-        createBadRequestHandler('Переданы некорректные данные при создании пользователя', next);
+        createBadRequestHandler('Переданы некорректные данные при создании пользователя', next)(err);
       }
     });
 };
@@ -60,7 +60,7 @@ export const createUser = (req: Request, res: Response, next: NextFunction) => {
 export const updateUser = (req: AuthorizedRequest, res: Response, next: NextFunction) => {
   const { name, about } = req.body;
   const userId = checkUser(req);
-  return User.findByIdAndUpdate(userId, { name, about }, { new: true })
+  return User.findByIdAndUpdate(userId, { name, about }, { new: true, runValidators: true })
     .then((user) => {
       if (!user) {
         throw CustomError.NotFound('Пользователь с указанным id не найден');
@@ -73,7 +73,7 @@ export const updateUser = (req: AuthorizedRequest, res: Response, next: NextFunc
 export const updateAvatar = (req: AuthorizedRequest, res: Response, next: NextFunction) => {
   const { avatar } = req.body;
   const userId = checkUser(req);
-  return User.findByIdAndUpdate(userId, { avatar }, { new: true })
+  return User.findByIdAndUpdate(userId, { avatar }, { new: true, runValidators: true })
     .then((user) => {
       if (!user) {
         throw CustomError.NotFound('Пользователь с указанным id не найден');

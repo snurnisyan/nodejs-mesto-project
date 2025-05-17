@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import validator from 'validator';
 
 export interface ICard {
   name: string;
@@ -18,6 +19,10 @@ const cardSchema = new mongoose.Schema({
   link: {
     type: String,
     required: true,
+    validate: {
+      validator: (url: string) => validator.isURL(url, { host_blacklist: [/^www\.\w+$/] }),
+      message: 'Ссылка указана в неверном формате',
+    },
   },
   createdAt: {
     type: Date,
