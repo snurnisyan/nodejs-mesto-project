@@ -19,7 +19,7 @@ export const createCard = (req: AuthorizedRequest, res: Response, next: NextFunc
 
 export const deleteCard = (req: Request, res: Response, next: NextFunction) => {
   const userId = checkUser(req);
-  return Card.findByIdAndDelete(req.params.id)
+  return Card.findById(req.params.id)
     .then((card) => {
       if (!card) {
         throw CustomError.NotFound('Карточка с указанным id не найдена');
@@ -27,7 +27,9 @@ export const deleteCard = (req: Request, res: Response, next: NextFunction) => {
       if (card.owner.toString() !== userId.toString()) {
         throw CustomError.Forbidden('Недостаточно прав для удаления карточки');
       }
-      res.send({ data: card });
+      Card.findByIdAndDelete(req.params.id)
+        .then((deletedCard) => res.send({ data: deletedCard }))
+        .catch(next);
     })
     .catch(createBadRequestHandler('Передан некорректный id карточки', next));
 };
